@@ -9,7 +9,9 @@ which is included as part of this source code package.
 #define DATA_PREPROCESS_HPP
 
 #include "CustomMsg.h"
+#include "common_lib.h"
 #include <Eigen/Core>
+#include <opencv2/opencv.hpp>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -35,13 +37,33 @@ public:
         string image_path = params.image_path;
         string lidar_topic = params.lidar_topic;
 
-        img_input_ = cv::imread(params.image_path, cv::IMREAD_UNCHANGED);
+        img_input_ = cv::imread(params.image_path, cv::IMREAD_COLOR);
         if (img_input_.empty()) 
         {
             std::string msg = "Loading the image " + image_path + " failed";
             ROS_ERROR_STREAM(msg.c_str());
             return;
         }
+        
+        // 确保图像是8位格式，ArUco检测器要求CV_8UC1或CV_8UC3
+        if (img_input_.type() != CV_8UC1 && img_input_.type() != CV_8UC3) 
+        {
+            cv::Mat temp_img;
+            if (img_input_.channels() == 1) 
+            {
+                // 单通道图像，转换为8位灰度图
+                img_input_.convertTo(temp_img, CV_8UC1);
+            } 
+            else 
+            {
+                // 多通道图像，转换为8位彩色图
+                img_input_.convertTo(temp_img, CV_8UC3);
+            }
+            img_input_ = temp_img;
+        }
+        
+        ROS_INFO("Loaded image: %dx%d, type: %d, channels: %d", 
+                 img_input_.cols, img_input_.rows, img_input_.type(), img_input_.channels());
 
         std::fstream file_;
         file_.open(bag_path, ios::in);

@@ -35,6 +35,7 @@ target_link_libraries(fast_calib
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  /usr/lib/x86_64-linux-gnu/libusb-1.0.so
 )
 
 add_executable(multi_fast_calib src/multi_scene.cpp)
@@ -42,4 +43,6 @@ target_link_libraries(multi_fast_calib
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  /usr/lib/x86_64-linux-gnu/libusb-1.0.so
 )
+

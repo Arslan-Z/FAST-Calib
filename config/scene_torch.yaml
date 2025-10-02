@@ -2,14 +2,14 @@
 # cam_width: 1224
 # cam_height: 1024
 # scale: 1.0
-fx: 1173.9332
-fy: 1163.24796
-cx: 567.42064
-cy: 512.42246
-k1: -0.043152
-k2: 0.063821
-p1: 0.001944
-p2: -0.000122
+fx: 899.08955
+fy: 899.31656
+cx: 601.44641
+cy: 513.87827
+k1: -0.107946
+k2: 0.055135
+p1: 0.000407
+p2: -0.000284
 
 # Calibration target parameters
 marker_size: 0.20 # ArUco marker size (our test data uses 0.16m; adjust to match your marker size)

@@ -38,6 +38,7 @@ public:
         string lidar_topic = params.lidar_topic;
 
         img_input_ = cv::imread(params.image_path, cv::IMREAD_COLOR);
+        
         if (img_input_.empty()) 
         {
             std::string msg = "Loading the image " + image_path + " failed";

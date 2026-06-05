@@ -1,0 +1,20 @@
+diff --git a/aslam_offline_calibration/kalibr/python/kalibr_camera_calibration/MulticamGraph.py b/aslam_offline_calibration/kalibr/python/kalibr_camera_calibration/MulticamGraph.py
+index 757c8e6..baa468b 100644
+--- a/aslam_offline_calibration/kalibr/python/kalibr_camera_calibration/MulticamGraph.py
++++ b/aslam_offline_calibration/kalibr/python/kalibr_camera_calibration/MulticamGraph.py
+@@ -310,6 +310,15 @@ class MulticamCalibrationGraph(object):
+         else:
+             target = "/tmp/graph.png"
+ 
++        # python-igraph 0.8+ raises KeyError when older Kalibr graph
++        # drawing code reads missing edge attributes. Keep calibration
++        # behavior unchanged and only provide plotting defaults.
++        edge_attrs = self.G.es.attributes()
++        if "weight" not in edge_attrs:
++            self.G.es["weight"] = [""] * len(self.G.es)
++        if "curved" not in edge_attrs:
++            self.G.es["curved"] = [False] * len(self.G.es)
++
+         plot = igraph.plot(self.G, 
+                            layout=layout, 
+                            rescale=False, 

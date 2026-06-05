@@ -1,0 +1,28 @@
+# D455 intrinsics and the existing physical target dimensions used by the
+# current sensor suite calibration setup.
+# Intrinsics source: /home/zcy/calibrationdata/sensor_suite/kalibr/d455_boson/runs/d455_boson_20260604_220541/results/kalibr/calib_20260604_223257/input-camchain.yaml
+# Use cam0 (/camera/color/image_raw) so RGB-LiDAR and RGB-thermal share the same RGB camera model.
+fx: 648.7587039755
+fy: 645.3432750164
+cx: 618.3136242244
+cy: 377.6338209303
+k1: -0.0576336585
+k2: 0.0715272032
+p1: 0.0050784261
+p2: -0.0071020580
+# ArUco marker side length for the current LiDAR-RGB FAST-Calib target.
+marker_size: 0.16
+delta_width_qr_center: 0.55
+delta_height_qr_center: 0.35
+delta_width_circles: 0.50
+delta_height_circles: 0.40
+circle_radius: 0.12
+
+x_min: 0.5
+x_max: 6.0
+y_min: -3.0
+y_max: 3.0
+z_min: -2.0
+z_max: 2.5
+
+output_path: "$(find fast_calib)/output"

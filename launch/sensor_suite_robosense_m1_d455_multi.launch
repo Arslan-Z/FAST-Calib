@@ -1,0 +1,12 @@
+<launch>
+  <arg name="rviz" default="false"/>
+  <arg name="run_id" default="$(optenv FAST_CALIB_RUN_ID manual)"/>
+  <arg name="result_root" default="/home/zcy/calibrationdata/sensor_suite/fast_calib/robosense_m1_d455"/>
+  <arg name="output_path" default="$(arg result_root)/runs/$(arg run_id)/results/fast_calib"/>
+  <rosparam file="$(find fast_calib)/config/sensor_suite_robosense_m1_d455.yaml" command="load" subst_value="true"/>
+  <param name="output_path" value="$(arg output_path)"/>
+  <node pkg="fast_calib" type="multi_fast_calib" name="multi_fast_calib_robosense_m1_d455" output="screen"/>
+  <group if="$(arg rviz)">
+    <node launch-prefix="nice" pkg="rviz" type="rviz" name="fast_calib_multi_rviz" args="-d $(find fast_calib)/rviz_cfg/fast_livo2.rviz"/>
+  </group>
+</launch>

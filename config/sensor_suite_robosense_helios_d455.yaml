@@ -1,0 +1,33 @@
+# FAST-Calib upstream-main offline config for Robosense Helios -> RealSense D455.
+# Upstream FAST-Calib uses ring-aware mechanical LiDAR detection when the raw RoboSense PointCloud2 contains ring.
+# Intrinsics source: /home/zcy/calibrationdata/sensor_suite/kalibr/d455_boson/runs/d455_boson_20260604_220541/results/kalibr/calib_20260604_223257/input-camchain.yaml
+# Use cam0 (/camera/color/image_raw) so RGB-LiDAR and RGB-thermal share the same RGB camera model.
+fx: 648.7587039755
+fy: 645.3432750164
+cx: 618.3136242244
+cy: 377.6338209303
+k1: -0.0576336585
+k2: 0.0715272032
+p1: 0.0050784261
+p2: -0.0071020580
+# ArUco marker side length for the current LiDAR-RGB FAST-Calib target.
+marker_size: 0.16
+delta_width_qr_center: 0.55
+delta_height_qr_center: 0.35
+delta_width_circles: 0.50
+delta_height_circles: 0.40
+circle_radius: 0.12
+
+# Tuned on Helios+D455 run 20260605_222734. The broader upstream-style
+# filter included too much background and only detected 2 LiDAR target circles.
+x_min: 1.0
+x_max: 3.5
+y_min: -1.5
+y_max: 1.5
+z_min: -0.5
+z_max: 1.8
+
+lidar_topic: "/rslidar_points_helios"
+bag_path: "/home/zcy/calibrationdata/sensor_suite/robosense_helios_d455.bag"
+image_path: "/home/zcy/calibrationdata/sensor_suite/robosense_helios_d455.png"
+output_path: "$(find fast_calib)/output"

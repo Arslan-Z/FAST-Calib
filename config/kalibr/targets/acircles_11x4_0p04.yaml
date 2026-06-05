@@ -1,0 +1,5 @@
+target_type: 'circlegrid'
+targetCols: 11
+targetRows: 4
+spacingMeters: 0.04
+asymmetricGrid: true

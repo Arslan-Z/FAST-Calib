@@ -1,0 +1,102 @@
+diff --git a/Schweizer-Messer/sm_python/python/sm/PlotCollection.py b/Schweizer-Messer/sm_python/python/sm/PlotCollection.py
+index 82d1060..fc75628 100755
+--- a/Schweizer-Messer/sm_python/python/sm/PlotCollection.py
++++ b/Schweizer-Messer/sm_python/python/sm/PlotCollection.py
+@@ -1,11 +1,18 @@
+ # import wxversion
+ # wxversion.ensureMinimal('2.8')
+ 
+-import wx
+-import wx.aui
+ import matplotlib as mpl
+-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as Canvas
+-from matplotlib.backends.backend_wx import NavigationToolbar2Wx as Toolbar
++try:
++    import wx
++    import wx.aui
++    from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as Canvas
++    from matplotlib.backends.backend_wx import NavigationToolbar2Wx as Toolbar
++    _HAS_WX = True
++except Exception:
++    wx = None
++    Canvas = None
++    Toolbar = None
++    _HAS_WX = False
+ import collections
+ 
+ class PlotCollection:
+@@ -52,6 +59,9 @@ class PlotCollection:
+         """
+         Show the window on screen
+         """
++        if not _HAS_WX:
++            print("wxPython not available; skipping plot display.")
++            return
+         if len(list(self.figureList.keys())) == 0:
+             return
+         app = wx.App()
+@@ -62,28 +72,39 @@ class PlotCollection:
+         frame.Show()
+         app.MainLoop()
+         
+-    class Plot(wx.Panel):
+-        def __init__(self, parent, fig, id = -1, dpi = None, **kwargs):
+-            wx.Panel.__init__(self, parent, id=id, **kwargs)
+-            fig.set_figheight(2)
+-            fig.set_figwidth(2)
+-            self.canvas = Canvas(self, -1, fig)
+-            self.toolbar = Toolbar(self.canvas)
+-            self.toolbar.Realize()
+-    
+-            sizer = wx.BoxSizer(wx.VERTICAL)
+-            sizer.Add(self.canvas,1,wx.EXPAND)
+-            sizer.Add(self.toolbar, 0 , wx.LEFT | wx.EXPAND)
+-            self.SetSizer(sizer)
+-    
+-    class PlotNotebook(wx.Panel):
+-        def __init__(self, parent, id = -1):
+-            wx.Panel.__init__(self, parent, id=id)
+-            self.nb = wx.aui.AuiNotebook(self)
+-            sizer = wx.BoxSizer()
+-            sizer.Add(self.nb, 1, wx.EXPAND)
+-            self.SetSizer(sizer)
+-    
+-        def add(self,name, fig):
+-           page = PlotCollection.Plot(self.nb, fig)
+-           self.nb.AddPage(page,name)
++    if _HAS_WX:
++        class Plot(wx.Panel):
++            def __init__(self, parent, fig, id = -1, dpi = None, **kwargs):
++                wx.Panel.__init__(self, parent, id=id, **kwargs)
++                fig.set_figheight(2)
++                fig.set_figwidth(2)
++                self.canvas = Canvas(self, -1, fig)
++                self.toolbar = Toolbar(self.canvas)
++                self.toolbar.Realize()
++        
++                sizer = wx.BoxSizer(wx.VERTICAL)
++                sizer.Add(self.canvas,1,wx.EXPAND)
++                sizer.Add(self.toolbar, 0 , wx.LEFT | wx.EXPAND)
++                self.SetSizer(sizer)
++        
++        class PlotNotebook(wx.Panel):
++            def __init__(self, parent, id = -1):
++                wx.Panel.__init__(self, parent, id=id)
++                self.nb = wx.aui.AuiNotebook(self)
++                sizer = wx.BoxSizer()
++                sizer.Add(self.nb, 1, wx.EXPAND)
++                self.SetSizer(sizer)
++        
++            def add(self,name, fig):
++               page = PlotCollection.Plot(self.nb, fig)
++               self.nb.AddPage(page,name)
++    else:
++        class Plot(object):
++            pass
++
++        class PlotNotebook(object):
++            def __init__(self, parent, id = -1):
++                pass
++
++            def add(self, name, fig):
++                pass

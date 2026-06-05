@@ -1,0 +1,29 @@
+# FAST-Calib offline config for Livox Horizon -> RealSense D455.
+# Capture a bag/image pair at the paths below, or override by editing this file.
+fx: 636.03466796875
+fy: 635.3134155273438
+cx: 644.188720703125
+cy: 367.4418640136719
+k1: -0.05539800971746445
+k2: 0.06372743844985962
+p1: -0.00013181526446714997
+p2: 0.0003997093008365482
+
+marker_size: 0.20
+delta_width_qr_center: 0.55
+delta_height_qr_center: 0.35
+delta_width_circles: 0.50
+delta_height_circles: 0.40
+circle_radius: 0.12
+
+x_min: 0.5
+x_max: 6.0
+y_min: -3.0
+y_max: 3.0
+z_min: -2.0
+z_max: 2.5
+
+lidar_topic: "/livox/lidar"
+bag_path: "/home/zcy/calibrationdata/sensor_suite/livox_horizon_d455.bag"
+image_path: "/home/zcy/calibrationdata/sensor_suite/livox_horizon_d455.png"
+output_path: "$(find fast_calib)/output"

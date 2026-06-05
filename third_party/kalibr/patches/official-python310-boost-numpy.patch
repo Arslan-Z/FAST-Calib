@@ -1,0 +1,34 @@
+diff --git a/Schweizer-Messer/python_module/cmake/add_python_export_library.cmake b/Schweizer-Messer/python_module/cmake/add_python_export_library.cmake
+index ccd6093..6809106 100755
+--- a/Schweizer-Messer/python_module/cmake/add_python_export_library.cmake
++++ b/Schweizer-Messer/python_module/cmake/add_python_export_library.cmake
+@@ -66,6 +66,19 @@ ${SETUP_PY_TEXT}
+   FIND_PACKAGE(PythonLibs REQUIRED)
+   INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_DIRS})
+ 
++  # NumPy headers are required by generated binding modules but are not
++  # part of PYTHON_INCLUDE_DIRS on Linux.
++  execute_process(
++    COMMAND ${PYTHON_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
++    RESULT_VARIABLE NUMPY_INCLUDE_RESULT
++    OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
++    OUTPUT_STRIP_TRAILING_WHITESPACE
++    ERROR_QUIET
++  )
++  if(NUMPY_INCLUDE_RESULT EQUAL 0 AND EXISTS "${NUMPY_INCLUDE_DIR}/numpy/arrayobject.h")
++    INCLUDE_DIRECTORIES(${NUMPY_INCLUDE_DIR})
++  endif()
++
+   if(APPLE)
+     SET(BOOST_COMPONENTS system)
+   else()
+@@ -86,7 +99,8 @@ ${SETUP_PY_TEXT}
+       list(APPEND BOOST_COMPONENTS python27)
+     endif()
+   else()
+-    list(APPEND BOOST_COMPONENTS python38)
++    # Use pythonXY suffix matching the detected Python version (e.g., python310)
++    list(APPEND BOOST_COMPONENTS python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
+   endif()
+   find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS}) 
+ 

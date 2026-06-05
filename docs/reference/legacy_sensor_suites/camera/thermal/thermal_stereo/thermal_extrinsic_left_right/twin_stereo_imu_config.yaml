@@ -1,0 +1,221 @@
+%YAML:1.0
+
+# this config is for the factory smoke dataset
+
+#common parameters
+#support: 1 imu 1 cam; 1 imu 2 cam: 2 cam; 
+imu: 1         
+num_of_cam: 2 
+dataset_name: "twin_stereo"
+
+
+use_superpoint: 1  # 0 not use superpoint feature; 1 use superpoint feature
+use_edge: 2      # 0 not use edge feature; 1 use edge feature
+use_line_feature: 0
+use_rectified_image: 0  # 0: extract features on original image then undistort; 1: extract features on rectified (undistorted) image
+enable_clahe: 0    # 0 not use CLAHE; 1 use CLAHE to enhance image contrast before feature extraction
+loop_fusion_skip_identical_images: 1  # 0 keep repeated frames; 1 skip same sampled hash without breaking stream continuity
+superpoint_onnx_name: "super_point"
+# superpoint_onnx_name: "thermal_super_point_v1"
+edge_distance_threshold: 3.0
+
+# Line feature parameters
+line_min_length: 30.0       # pixels
+line_max_per_frame: 80      # keep longest lines per frame
+line_min_obs: 3             # minimum observations in window
+line_weight: 1.0            # weight multiplier for line residuals
+line_huber: 1.0             # Huber delta for line residuals (<=0 to disable)
+line_vis_min_obs: 3         # minimum accumulated observations before showing 3D line
+line_vis_max_std: 0.3       # max std dev (m) for stable 3D line display (<=0 to disable)
+line_vis_max_age: 0.0       # seconds to keep unseen 3D lines in cache (<=0 to disable)
+
+init_depth: 5.0
+
+imu_topic: "/vectornav/imu"
+image0_topic: "/thermal_left_1"
+image1_topic: "/thermal_right_1"
+output_path: "~/output/"
+
+cam0_calib: "cam0_pinhole.yaml"
+cam1_calib: "cam1_pinhole.yaml"
+image_width: 640
+image_height: 512
+   
+
+# Extrinsic parameter between IMU and Camera.
+estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+                        # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
+
+body_T_cam0: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: d
+   data: [-0.046511619015, 0.024381563505, 0.998620152339, -0.008301072962,
+      0.998607358753, 0.026054499922, 0.045874895939, 0.015703613294,
+      -0.024900046992, 0.999363148407, -0.025559445708, 0.005984963397,
+      0, 0, 0, 1]
+
+# body_T_cam1: !!opencv-matrix
+#    rows: 4
+#    cols: 4
+#    dt: d
+#    data: [ -0.0209478788487311, 0.00742868091773816, 0.999752970023876, 0.0248059389788233, 0.999777675710212, -0.00225012415127033, 0.0209651160929165, 0.205468070336834, 0.00240531146101257, 0.999969875366816, -0.00737989401341362, 0.00979979521915669, 0, 0, 0, 1 ]
+
+# Relative extrinsics from Camera0 to Camera1 (cam0_T_cam1 = cam0^T_cam1)
+# This comes directly from stereo camera calibration, which is easier to obtain and verify
+cam0_T_cam1: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: d
+   data: [0.999947040994, 0.004590107311, -0.009211195464, 0.198756709305,
+      -0.00455244119, 0.99998120794, 0.004105976934, -0.000907473868,
+      0.009229869242, -0.00406382606, 0.999949146123, 0.000193538957,
+      0, 0, 0, 1]
+
+
+#Multiple thread support
+multiple_thread: 1
+
+#feature traker paprameters
+max_cnt: 300            # max feature number in feature tracking
+min_dist: 10            # min distance between two features 
+freq: 0                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image 
+F_threshold: 1.0        # ransac threshold (pixel)
+show_track: 1           # publish tracking image as topic
+flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
+
+#optimization parameters
+max_solver_time: 0.08  # max solver itration time (ms), to guarantee real time
+max_num_iterations: 8   # max solver itrations, to guarantee real time
+keyframe_parallax: 10.0 # keyframe selection threshold (pixel)
+
+# Weak ground-vehicle kinematic velocity constraint
+enable_kinematic_constraint: 0
+kinematic_sigma_y: 0.20
+kinematic_sigma_y_turn: 0.40
+kinematic_yaw_rate_relax: 0.20
+kinematic_sigma_z_flat: 0.20
+kinematic_sigma_z_slope: 0.60
+kinematic_deadband_y: 0.30
+kinematic_deadband_z: 0.30
+kinematic_pitch_flat_deg: 3.0
+kinematic_pitch_relax_deg: 8.0
+kinematic_huber: 1.0
+kinematic_min_speed: 0.05
+
+# Flat-ground prior for payload tests. With auto slope enabled, gentle pitch is
+# still treated as flat, while sustained steeper pitch releases the z clamp.
+enable_ground_plane_constraint: 1
+ground_plane_z: 0.0
+ground_plane_sigma: 0.02
+ground_plane_huber: 0.0
+ground_plane_auto_slope: 0
+ground_plane_slope_enter_deg: 12.0
+ground_plane_slope_exit_deg: 6.0
+ground_plane_slope_enter_streak: 14
+ground_plane_slope_exit_streak: 15
+ground_plane_slope_min_speed: 0.15
+
+# Gated zero-velocity update for short stop-and-go drift
+enable_zupt: 1
+zupt_sigma: 0.15
+zupt_huber: 0.5
+zupt_min_imu_samples: 5
+zupt_imu_gyro_thresh: 0.08
+zupt_imu_acc_std_thresh: 0.35
+zupt_imu_acc_norm_thresh: 0.50
+zupt_vision_min_features: 30
+zupt_vision_flow_thresh: 0.03
+zupt_radar_min_points: 8
+zupt_radar_doppler_thresh: 0.15
+zupt_speed_thresh_enter: 0.20
+zupt_speed_thresh_exit: 0.35
+zupt_entry_streak: 3
+zupt_vision_grace_frames: 2
+zupt_radar_grace_frames: 2
+enable_zupt_shutter: 1
+zupt_shutter_cooldown: 15.0
+zupt_shutter_command: "arv-tool-0.8 -a 192.168.3.15 control Shutter && arv-tool-0.8 -a 192.168.4.16 control Shutter"
+# Elevator sidecar depends on ZUPT; disable together for a clean rollback.
+enable_elevator_mode: 0
+elevator_arm_streak: 5
+elevator_entry_streak: 3
+elevator_exit_static_streak: 5
+elevator_vert_accel_enter: 0.25
+elevator_vert_accel_exit: 0.08
+elevator_counter_accel_thresh: 0.18
+elevator_lateral_accel_max: 0.35
+elevator_gyro_max: 0.10
+elevator_max_duration: 30.0
+enable_elevator_odom_override: 0
+enable_elevator_auto_restart: 0
+elevator_restart_speed_thresh: 0.15
+
+#imu parameters       The more accurate parameters you provide, the better performance
+# acc_n: 0.1          # accelerometer measurement noise standard deviation. 
+# gyr_n: 0.01         # gyroscope measurement noise standard deviation.     
+# acc_w: 0.001        # accelerometer bias random work noise standard deviation.  
+# gyr_w: 0.0001       # gyroscope bias random work noise standard deviation.     
+# g_norm: 9.81007     # gravity magnitude
+
+acc_n: 0.7         # accelerometer measurement noise standard deviation. #0.2  0.52281160035059417
+gyr_n: 0.0011667951042710442          # gyroscope measurement noise standard deviation.     #0.05
+acc_w: 0.001         # accelerometer bias random work noise standard deviation.  #0.02  0.011782392708033614
+gyr_w: 2.616129872371749e-04         # gyroscope bias random work noise standard deviation.     #4.0e-5
+g_norm: 9.81       # gravity magnitude
+
+#unsynchronization parameters
+estimate_td: 0                      # online estimate time offset between camera and imu
+td: 0.0536872852655708              # initial value of time offset. unit: s. readed image clock + td = real image clock (IMU clock)
+
+#loop closure parameters
+load_previous_pose_graph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'
+pose_graph_save_path: "~/output/pose_graph/" # save and load path
+save_image: 1                   # save image in pose graph for visualization prupose; you can close this function by setting 0
+
+#radar parameters
+use_radar: 1                    # 0 not use radar; 1 use radar
+radar_topic: "/Target_R7863_1"  # radar topic name /Target_Radar_1
+radar_doppler_noise: 0.1        # radar doppler measurement noise standard deviation
+radar_time_threshold: 0.05      # radar and image time alignment threshold
+radar_process_interval: 0.0     # Do not downsample when FUSION_MODE=1; process every frame
+radar_enable_static_gate_sign1_match_td: 0  # one-shot preset: sign=1 + static gate + stronger radar weight + match_td
+radar_doppler_sign: 1           # 1 keeps sensor Doppler sign; -1 matches RIO-style flipped Doppler
+radar_doppler_max_info_gain: 0.0 # <=0 uses 1 / radar_doppler_noise
+radar_max_points_per_frame: 50  # 0 means unlimited
+radar_min_abs_doppler: 0.1      # set 0.0 to keep near-zero Doppler static returns
+radar_min_distance: 1.0
+radar_max_distance: 50.0
+radar_min_intensity: 0.0        # GPAL power threshold; 0 disables power filtering
+radar_use_static_gate: 0        # keep only Doppler-consistent static points when enabled
+radar_static_vel_threshold: 0.3 # m/s Doppler residual gate for static-point selection
+radar_time_weight_sigma: 0.0    # seconds; >0 downweights radar frames farther from image time
+radar_match_use_td: 0           # match radar to image_time + td in full fusion when enabled
+radar_sigma_azimuth: 0.02
+radar_sigma_elevation: 0.02
+
+# Fusion mode selection
+# fusion_mode: 0  - Thermal + IMU 
+# fusion_mode: 1  - Radar + IMU 
+# fusion_mode: 2  - Thermal + Radar + IMU
+fusion_mode: 2
+
+# Extrinsic parameter between Body and Radar
+body_T_radar: !!opencv-matrix  # transformation matrix from body/imu coordinate system to radar coordinate system
+   rows: 4
+   cols: 4
+   dt: d
+   data: [ 1.0,  0.0,  0.0,  0.0,      # Row 1: r11, r12, r13, tx
+           0.0, -1.0,  0.0,  0.0,      # Row 2: r21, r22, r23, ty
+           0.0,  0.0, -1.0,  0.0,      # Row 3: r31, r32, r33, tz
+           0.0,  0.0,  0.0,  1.0 ]     # Row 4: 0, 0, 0, 1
+
+# Radar preprocessing parameters
+# radar_fov_min_elevation: -15.0    # Minimum FOV elevation angle (deg)
+# radar_fov_max_elevation: 15.0     # Maximum FOV elevation angle (deg)
+# radar_fov_min_azimuth: -60.0      # Minimum FOV azimuth angle (deg)
+# radar_fov_max_azimuth: 60.0       # Maximum FOV azimuth angle (deg)
+# radar_min_distance: 0.5           # Minimum measurement distance (m)
+# radar_max_distance: 100.0         # Maximum measurement distance (m)
+# radar_min_velocity: -30.0         # Minimum Doppler velocity (m/s)
+# radar_max_velocity: 30.0          # Maximum Doppler velocity (m/s)

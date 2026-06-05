@@ -1,4 +1,4 @@
-/* 
+/*
 Developer: Chunran Zheng <zhengcr@connect.hku.hk>
 
 This file is subject to the terms and conditions outlined in the 'LICENSE' file,
@@ -24,6 +24,7 @@ which is included as part of this source code package.
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/registration/transformation_estimation_svd.h>
+#include <iomanip>
 #include <cmath>
 #include <opencv2/opencv.hpp>
 #include <tf/tf.h>
@@ -38,7 +39,7 @@ using namespace pcl;
 #define GEOMETRY_TOLERANCE 0.08
 
 // ===== 自定义点类型：XYZ + ring =====
-namespace Common 
+namespace Common
 {
   struct Point
   {
@@ -65,6 +66,7 @@ struct Params {
   string bag_path;
   string lidar_topic;
   string output_path;
+  string scene_id;
 };
 
 // 读取参数
@@ -89,6 +91,7 @@ Params loadParameters(ros::NodeHandle &nh) {
   nh.param("bag_path", params.bag_path, string("/home/chunran/calib_ws/src/fast_calib/data/input.bag"));
   nh.param("lidar_topic", params.lidar_topic, string("/livox/lidar"));
   nh.param("output_path", params.output_path, string("/home/chunran/calib_ws/src/fast_calib/output"));
+  nh.param("scene_id", params.scene_id, string(""));
   nh.param("x_min", params.x_min, 1.5);
   nh.param("x_max", params.x_max, 3.0);
   nh.param("y_min", params.y_min, -1.5);
@@ -98,17 +101,24 @@ Params loadParameters(ros::NodeHandle &nh) {
   return params;
 }
 
-double computeRMSE(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud1, 
-                   const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud2) 
+std::string sceneOutputName(const std::string& stem, const std::string& ext,
+                            const Params& params)
 {
-    if (cloud1->size() != cloud2->size()) 
+  if (params.scene_id.empty()) return stem + ext;
+  return stem + "_" + params.scene_id + ext;
+}
+
+double computeRMSE(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud1,
+                   const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud2)
+{
+    if (cloud1->size() != cloud2->size())
     {
       std::cerr << BOLDRED << "[computeRMSE] Point cloud sizes do not match, cannot compute RMSE." << RESET << std::endl;
       return -1.0;
     }
 
     double sum = 0.0;
-    for (size_t i = 0; i < cloud1->size(); ++i) 
+    for (size_t i = 0; i < cloud1->size(); ++i)
     {
       double dx = cloud1->points[i].x - cloud2->points[i].x;
       double dy = cloud1->points[i].y - cloud2->points[i].y;
@@ -123,10 +133,10 @@ double computeRMSE(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud1,
 
 // 将 LiDAR 点云转换到 QR 码坐标系
 void alignPointCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud,
-  pcl::PointCloud<pcl::PointXYZ>::Ptr &output_cloud, const Eigen::Matrix4f &transformation) 
+  pcl::PointCloud<pcl::PointXYZ>::Ptr &output_cloud, const Eigen::Matrix4f &transformation)
 {
   output_cloud->clear();
-  for (const auto &pt : input_cloud->points) 
+  for (const auto &pt : input_cloud->points)
   {
     Eigen::Vector4f pt_homogeneous(pt.x, pt.y, pt.z, 1.0);
     Eigen::Vector4f transformed_pt = transformation * pt_homogeneous;
@@ -171,7 +181,7 @@ void projectPointCloudToImage(const pcl::PointCloud<Common::Point>::Ptr& cloud,
   const cv::Mat& cameraMatrix,
   const cv::Mat& distCoeffs,
   const cv::Mat& image,
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr& colored_cloud) 
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr& colored_cloud)
 {
   colored_cloud->clear();
   colored_cloud->reserve(cloud->size());
@@ -189,7 +199,7 @@ void projectPointCloudToImage(const pcl::PointCloud<Common::Point>::Ptr& cloud,
   std::vector<cv::Point3f> objectPoints(1);
   std::vector<cv::Point2f> imagePoints(1);
 
-  for (const auto& point : *cloud) 
+  for (const auto& point : *cloud)
   {
     // Transform the point
     Eigen::Vector4f homogeneous_point(point.x, point.y, point.z, 1.0f);
@@ -206,7 +216,7 @@ void projectPointCloudToImage(const pcl::PointCloud<Common::Point>::Ptr& cloud,
     int v = static_cast<int>(imagePoints[0].y);
 
     // Check if the point is within the image bounds
-    if (u >= 0 && u < undistortedImage.cols && v >= 0 && v < undistortedImage.rows) 
+    if (u >= 0 && u < undistortedImage.cols && v >= 0 && v < undistortedImage.rows)
     {
       // Get the color from the undistorted image
       cv::Vec3b color = undistortedImage.at<cv::Vec3b>(v, u);
@@ -232,7 +242,7 @@ void saveTargetHoleCenters(const pcl::PointCloud<pcl::PointXYZ>::Ptr& lidar_cent
       std::cerr << "[saveTargetHoleCenters] The number of points in lidar_centers or qr_centers is not 4, skip saving." << std::endl;
       return;
     }
-    
+
     std::string saveDir = params.output_path;
     if (saveDir.back() != '/') saveDir += '/';
     std::ofstream saveFile(saveDir + "circle_center_record.txt", std::ios::app);
@@ -261,10 +271,10 @@ void saveTargetHoleCenters(const pcl::PointCloud<pcl::PointXYZ>::Ptr& lidar_cent
     std::cout << BOLDGREEN << "[Record] Saved four pairs of circular hole centers to " << BOLDWHITE << saveDir << "circle_center_record.txt" << RESET << std::endl;
 }
 
-void saveCalibrationResults(const Params& params, const Eigen::Matrix4f& transformation, 
+void saveCalibrationResults(const Params& params, const Eigen::Matrix4f& transformation,
      const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& colored_cloud, const cv::Mat& img_input)
 {
-  if(colored_cloud->empty()) 
+  if(colored_cloud->empty())
   {
     std::cerr << BOLDRED << "[saveCalibrationResults] Colored point cloud is empty!" << RESET << std::endl;
     return;
@@ -272,9 +282,14 @@ void saveCalibrationResults(const Params& params, const Eigen::Matrix4f& transfo
   std::string outputDir = params.output_path;
   if (outputDir.back() != '/') outputDir += '/';
 
-  std::ofstream outFile(outputDir + "single_calib_result.txt");
-  if (outFile.is_open()) 
+  const std::string singleResultName = sceneOutputName("single_calib_result", ".txt", params);
+  const std::string coloredCloudName = sceneOutputName("colored_cloud", ".pcd", params);
+  const std::string qrDetectName = sceneOutputName("qr_detect", ".png", params);
+
+  std::ofstream outFile(outputDir + singleResultName);
+  if (outFile.is_open())
   {
+    outFile << std::setprecision(12);
     outFile << "# FAST-LIVO2 calibration format\n";
     outFile << "cam_model: Pinhole\n";
     outFile << "cam_width: " << img_input.cols << "\n";
@@ -289,7 +304,7 @@ void saveCalibrationResults(const Params& params, const Eigen::Matrix4f& transfo
     outFile << "cam_d2: " << params.p1 << "\n";
     outFile << "cam_d3: " << params.p2 << "\n";
 
-    outFile << "\nRcl: [" << std::fixed << std::setprecision(6);
+    outFile << "\nRcl: [" << std::fixed << std::setprecision(12);
     outFile << std::setw(10) << transformation(0, 0) << ", " << std::setw(10) << transformation(0, 1) << ", " << std::setw(10) << transformation(0, 2) << ",\n";
     outFile << "      " << std::setw(10) << transformation(1, 0) << ", " << std::setw(10) << transformation(1, 1) << ", " << std::setw(10) << transformation(1, 2) << ",\n";
     outFile << "      " << std::setw(10) << transformation(2, 0) << ", " << std::setw(10) << transformation(2, 1) << ", " << std::setw(10) << transformation(2, 2) << "]\n";
@@ -298,28 +313,28 @@ void saveCalibrationResults(const Params& params, const Eigen::Matrix4f& transfo
     outFile << std::setw(10) << transformation(0, 3) << ", " << std::setw(10) << transformation(1, 3) << ", " << std::setw(10) << transformation(2, 3) << "]\n";
 
     outFile.close();
-    std::cout << BOLDYELLOW << "[Result] Single-scene calibration results saved to " << BOLDWHITE << outputDir << "single_calib_result.txt" << RESET << std::endl;
-  } 
+    std::cout << BOLDYELLOW << "[Result] Single-scene calibration results saved to " << BOLDWHITE << outputDir << singleResultName << RESET << std::endl;
+  }
   else
   {
-    std::cerr << BOLDRED << "[Error] Failed to open single_calib_result.txt for writing!" << RESET << std::endl;
+    std::cerr << BOLDRED << "[Error] Failed to open " << singleResultName << " for writing!" << RESET << std::endl;
   }
-  
-  if (pcl::io::savePCDFileASCII(outputDir + "colored_cloud.pcd", *colored_cloud) == 0) 
+
+  if (pcl::io::savePCDFileASCII(outputDir + coloredCloudName, *colored_cloud) == 0)
   {
-    std::cout << BOLDYELLOW << "[Result] Saved colored point cloud to: " << BOLDWHITE << outputDir << "colored_cloud.pcd" << RESET << std::endl;
-  } 
-  else 
-  {
-    std::cerr << BOLDRED << "[Error] Failed to save colored point cloud to " << outputDir << "colored_cloud.pcd" << "!" << RESET << std::endl;
+    std::cout << BOLDYELLOW << "[Result] Saved colored point cloud to: " << BOLDWHITE << outputDir << coloredCloudName << RESET << std::endl;
   }
- 
-  imwrite(outputDir + "qr_detect.png", img_input);
+  else
+  {
+    std::cerr << BOLDRED << "[Error] Failed to save colored point cloud to " << outputDir << coloredCloudName << "!" << RESET << std::endl;
+  }
+
+  imwrite(outputDir + qrDetectName, img_input);
 }
 
 void sortPatternCenters(pcl::PointCloud<pcl::PointXYZ>::Ptr pc,
                         pcl::PointCloud<pcl::PointXYZ>::Ptr v,
-                        const std::string& axis_mode = "camera") 
+                        const std::string& axis_mode = "camera")
 {
   if (pc->size() != 4) {
     std::cerr << BOLDRED << "[sortPatternCenters] Number of " << axis_mode << " center points to be sorted is not 4." << RESET << std::endl;
@@ -387,20 +402,20 @@ void sortPatternCenters(pcl::PointCloud<pcl::PointXYZ>::Ptr pc,
   }
 }
 
-class Square 
+class Square
 {
   private:
     pcl::PointXYZ _center;
     std::vector<pcl::PointXYZ> _candidates;
     float _target_width, _target_height, _target_diagonal;
- 
+
   public:
     Square(std::vector<pcl::PointXYZ> candidates, float width, float height) {
       _candidates = candidates;
       _target_width = width;
       _target_height = height;
       _target_diagonal = sqrt(pow(width, 2) + pow(height, 2));
- 
+
       // Compute candidates centroid
       _center.x = _center.y = _center.z = 0;
       for (int i = 0; i < candidates.size(); ++i) {
@@ -408,27 +423,27 @@ class Square
         _center.y += candidates[i].y;
         _center.z += candidates[i].z;
       }
- 
+
       _center.x /= candidates.size();
       _center.y /= candidates.size();
       _center.z /= candidates.size();
     }
- 
+
     float distance(pcl::PointXYZ pt1, pcl::PointXYZ pt2) {
       return sqrt(pow(pt1.x - pt2.x, 2) + pow(pt1.y - pt2.y, 2) +
                   pow(pt1.z - pt2.z, 2));
     }
- 
+
     pcl::PointXYZ at(int i) {
       assert(0 <= i && i < 4);
       return _candidates[i];
     }
- 
+
     // ==================================================================================================
     // The original is_valid() was too rigid. This version is more robust by checking for two possible
     // orderings of the side lengths (width-height vs. height-width) after angular sorting.
     // ==================================================================================================
-    bool is_valid() 
+    bool is_valid()
     {
       if (_candidates.size() != 4) return false;
 
@@ -443,11 +458,11 @@ class Square
           return false;
         }
       }
-      
+
       // Sort the corners counter-clockwise
       pcl::PointCloud<pcl::PointXYZ>::Ptr sorted_centers(new pcl::PointCloud<pcl::PointXYZ>());
       sortPatternCenters(candidates_cloud, sorted_centers, "camera");
-      
+
       // Get the four side lengths from the sorted points
       float s01 = distance(sorted_centers->points[0], sorted_centers->points[1]);
       float s12 = distance(sorted_centers->points[1], sorted_centers->points[2]);
@@ -455,14 +470,14 @@ class Square
       float s30 = distance(sorted_centers->points[3], sorted_centers->points[0]);
 
       // Check for pattern 1: width, height, width, height
-      bool pattern1_ok = 
+      bool pattern1_ok =
         (fabs(s01 - _target_width) / _target_width < GEOMETRY_TOLERANCE) &&
         (fabs(s12 - _target_height) / _target_height < GEOMETRY_TOLERANCE) &&
         (fabs(s23 - _target_width) / _target_width < GEOMETRY_TOLERANCE) &&
         (fabs(s30 - _target_height) / _target_height < GEOMETRY_TOLERANCE);
 
       // Check for pattern 2: height, width, height, width
-      bool pattern2_ok = 
+      bool pattern2_ok =
         (fabs(s01 - _target_height) / _target_height < GEOMETRY_TOLERANCE) &&
         (fabs(s12 - _target_width) / _target_width < GEOMETRY_TOLERANCE) &&
         (fabs(s23 - _target_height) / _target_height < GEOMETRY_TOLERANCE) &&
@@ -471,14 +486,14 @@ class Square
       if (!pattern1_ok && !pattern2_ok) {
         return false;
       }
-      
+
       // Final check on perimeter
       float perimeter = s01 + s12 + s23 + s30;
       float ideal_perimeter = 2 * (_target_width + _target_height);
       if (fabs(perimeter - ideal_perimeter) / ideal_perimeter > GEOMETRY_TOLERANCE) {
         return false;
       }
- 
+
       return true;
     }
 };

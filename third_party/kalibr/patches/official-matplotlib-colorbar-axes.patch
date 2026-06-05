@@ -1,0 +1,14 @@
+diff --git a/aslam_offline_calibration/kalibr/python/kalibr_camera_calibration/CameraUtils.py b/aslam_offline_calibration/kalibr/python/kalibr_camera_calibration/CameraUtils.py
+index 67b1436..aac3a06 100644
+--- a/aslam_offline_calibration/kalibr/python/kalibr_camera_calibration/CameraUtils.py
++++ b/aslam_offline_calibration/kalibr/python/kalibr_camera_calibration/CameraUtils.py
+@@ -264,7 +264,8 @@ def plotAllReprojectionErrors(cself, cam_id, fno=1, noShow=False, clearFigure=Tr
+ 
+     SM = pl.cm.ScalarMappable(pl.cm.colors.Normalize(0.0,len(cself.views)), pl.cm.jet)
+     SM.set_array(np.arange(len(cself.views)));
+-    cb = pl.colorbar(SM)
++    # Matplotlib >=3.8 requires an explicit target axes for colorbar placement.
++    cb = f.colorbar(SM, ax=sub)
+     cb.set_label('image index')
+     if not noShow:
+         pl.show()

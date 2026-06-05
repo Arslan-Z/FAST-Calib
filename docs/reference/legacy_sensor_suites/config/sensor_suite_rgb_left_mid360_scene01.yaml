@@ -1,0 +1,45 @@
+# FAST-Calib parameters for sensor suite left RGB camera + Livox Mid360.
+# Intrinsics source: /home/zcy/fast_calib_ws/src/FAST-Calib/output/kalibr/rgb_left_thermal_left_20260528_205814/input-camchain.yaml
+# Scene 01 is the nominal/front board placement.
+
+# Camera intrinsics: cam0 /rgb_left from the selected RGB-thermal Kalibr run.
+fx: 714.52028130
+fy: 713.28393330
+cx: 410.65414095
+cy: 335.02442555
+k1: -0.01740054
+k2: 0.12156711
+p1: 0.00560514
+p2: -0.00334984
+
+# Calibration target parameters.
+marker_size: 0.16
+delta_width_qr_center: 0.55
+delta_height_qr_center: 0.35
+delta_width_circles: 0.5
+delta_height_circles: 0.4
+circle_radius: 0.12
+min_detected_markers: 3
+
+# Distance filter for Mid360 target extraction. Tune per scene if needed.
+x_min: 1.0
+x_max: 5.0
+y_min: -1
+y_max: 4.0
+z_min: 0.0
+z_max: 2.0
+# x_min: 2.0
+# x_max: 5.0
+# y_min: -0.8
+# y_max: 1.3
+# z_min: 0.0
+# z_max: 2.0
+
+# Input data for this scene.
+lidar_topic: "/livox/points"
+bag_path: "$(find fast_calib)/calib_data/sensor_suite_rgb_left_mid360/scene01.bag"
+image_path: "$(find fast_calib)/calib_data/sensor_suite_rgb_left_mid360/scene01.ppm"
+
+# Shared side output. Single-scene result files are overwritten per scene;
+# circle_center_record.txt is appended and then used by multi-scene calibration.
+output_path: "$(find fast_calib)/output/sensor_suite_rgb_left_mid360"

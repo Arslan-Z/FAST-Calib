@@ -1,0 +1,33 @@
+# FAST-Calib parameters for sensor suite left RGB camera + Livox Mid360.
+# Intrinsics source: /home/zcy/fast_calib_ws/src/FAST-Calib/output/kalibr/rgb_left_thermal_left_20260528_205814/input-camchain.yaml
+# Scene 02 is the board placed toward one side of the LiDAR FoV.
+
+fx: 714.52028130
+fy: 713.28393330
+cx: 410.65414095
+cy: 335.02442555
+k1: -0.01740054
+k2: 0.12156711
+p1: 0.00560514
+p2: -0.00334984
+
+marker_size: 0.16
+delta_width_qr_center: 0.55
+delta_height_qr_center: 0.35
+delta_width_circles: 0.5
+delta_height_circles: 0.4
+circle_radius: 0.12
+min_detected_markers: 3
+
+x_min: 2.0
+x_max: 5.0
+y_min: -4.0
+y_max: 1.0
+z_min: -0.5
+z_max: 2.0
+
+lidar_topic: "/livox/points"
+bag_path: "$(find fast_calib)/calib_data/sensor_suite_rgb_left_mid360/scene02.bag"
+image_path: "$(find fast_calib)/calib_data/sensor_suite_rgb_left_mid360/scene02.ppm"
+
+output_path: "$(find fast_calib)/output/sensor_suite_rgb_left_mid360"

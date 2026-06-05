@@ -1,5 +1,6 @@
 # FAST-Calib upstream-main offline config for Robosense M1 -> RealSense D455.
-# Upstream FAST-Calib uses ring-aware mechanical LiDAR detection when the raw RoboSense PointCloud2 contains ring.
+# M1 publishes an organized solid-state/MEMS-style PointCloud2. It has a ring field,
+# so force solid LiDAR detection instead of the automatic ring => mechanical path.
 # Intrinsics source: /home/zcy/calibrationdata/sensor_suite/kalibr/d455_boson/runs/d455_boson_20260604_220541/results/kalibr/calib_20260604_223257/input-camchain.yaml
 # Use cam0 (/camera/color/image_raw) so RGB-LiDAR and RGB-thermal share the same RGB camera model.
 fx: 648.7587039755
@@ -12,6 +13,7 @@ p1: 0.0050784261
 p2: -0.0071020580
 # ArUco marker side length for the current LiDAR-RGB FAST-Calib target.
 marker_size: 0.16
+lidar_type: 1  # 0=auto, 1=solid, 2=mechanical
 delta_width_qr_center: 0.55
 delta_height_qr_center: 0.35
 delta_width_circles: 0.50

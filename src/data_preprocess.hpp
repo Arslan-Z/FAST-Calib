@@ -45,6 +45,7 @@ public:
         string bag_path   = params.bag_path;
         string image_path = params.image_path;
         string lidar_topic = params.lidar_topic;
+        const int lidar_type_override = params.lidar_type;
 
         // 读图像
         img_input_ = cv::imread(image_path, cv::IMREAD_UNCHANGED);
@@ -123,6 +124,15 @@ public:
                 else
                 {
                     lidar_type_ = LiDARType::Solid;
+                }
+
+                if (lidar_type_override == static_cast<int>(LiDARType::Solid))
+                {
+                    lidar_type_ = LiDARType::Solid;
+                }
+                else if (lidar_type_override == static_cast<int>(LiDARType::Mech))
+                {
+                    lidar_type_ = LiDARType::Mech;
                 }
 
                 const size_t n = static_cast<size_t>(pcl_msg->width) * pcl_msg->height;

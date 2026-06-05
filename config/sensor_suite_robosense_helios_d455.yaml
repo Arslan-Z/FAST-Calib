@@ -12,6 +12,7 @@ p1: 0.0050784261
 p2: -0.0071020580
 # ArUco marker side length for the current LiDAR-RGB FAST-Calib target.
 marker_size: 0.16
+lidar_type: 2  # 0=auto, 1=solid, 2=mechanical
 delta_width_qr_center: 0.55
 delta_height_qr_center: 0.35
 delta_width_circles: 0.50

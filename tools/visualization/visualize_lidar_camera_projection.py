@@ -19,6 +19,7 @@ import argparse
 import math
 import os
 import re
+import shutil
 from pathlib import Path
 from typing import Optional
 
@@ -368,6 +369,15 @@ def thermal_colors_from_image(thermal_bgr: np.ndarray, uv: np.ndarray) -> np.nda
     return sampled_bgr[:, ::-1]
 
 
+def colors_from_bgr_image(image_bgr: np.ndarray, uv: np.ndarray) -> np.ndarray:
+    px = np.rint(uv).astype(np.int64)
+    h, w = image_bgr.shape[:2]
+    px[:, 0] = np.clip(px[:, 0], 0, w - 1)
+    px[:, 1] = np.clip(px[:, 1], 0, h - 1)
+    sampled_bgr = image_bgr[px[:, 1], px[:, 0]]
+    return sampled_bgr[:, ::-1]
+
+
 def default_target_stamp(metadata: dict[str, str], target_stamp: Optional[float], bag_path: str) -> tuple[float, str]:
     if target_stamp is not None:
         return target_stamp, "--target-stamp"
@@ -489,6 +499,29 @@ def main() -> int:
         f"rgb_full_intensity_overlay={rgb_full_intensity_path}",
         f"rgb_full_intensity_projected_points={len(uv_full_i)}",
     ]
+    uv_rgb_color, _, _, rgb_color_indices = project_points_with_values_and_indices(
+        full_points,
+        None,
+        R_rgb_lidar,
+        t_rgb_lidar,
+        K_rgb,
+        D_rgb,
+        rgb.shape,
+        args.full_min_depth,
+    )
+    rgb_cloud_points = full_points[rgb_color_indices]
+    rgb_cloud_colors = colors_from_bgr_image(rgb, uv_rgb_color)
+    rgb_cloud_path = out_dir / "rgb_colored_cloud.pcd"
+    write_ascii_xyzrgb_pcd(rgb_cloud_path, rgb_cloud_points, rgb_cloud_colors)
+    summary += [
+        f"rgb_colored_cloud={rgb_cloud_path}",
+        f"rgb_colored_cloud_points={len(rgb_cloud_points)}",
+    ]
+    for rendered in render_colored_cloud(str(rgb_cloud_path), out_dir, args.pcd_max_points):
+        rendered_path = Path(rendered)
+        renamed = out_dir / f"rgb_{rendered_path.name}"
+        rendered_path.replace(renamed)
+        summary.append(f"rgb_colored_cloud_view={renamed}")
     if rgb_dt is not None:
         summary.append(f"nearest_rgb_dt_s={rgb_dt:.9f}")
 
@@ -545,7 +578,10 @@ def main() -> int:
         reason = "missing --kalibr-camchain" if not args.kalibr_camchain else f"bag has no {args.thermal_topic}"
         summary.append(f"thermal_overlay=SKIPPED ({reason})")
 
-    for rendered in render_colored_cloud(args.colored_pcd, out_dir, args.pcd_max_points):
+    fast_calib_colored_cloud_path = out_dir / "fast_calib_colored_cloud.pcd"
+    shutil.copy2(args.colored_pcd, fast_calib_colored_cloud_path)
+    summary.append(f"fast_calib_colored_cloud={fast_calib_colored_cloud_path}")
+    for rendered in render_colored_cloud(str(fast_calib_colored_cloud_path), out_dir, args.pcd_max_points):
         summary.append(f"colored_cloud_view={rendered}")
 
     summary_path = out_dir / "visual_check_summary.txt"

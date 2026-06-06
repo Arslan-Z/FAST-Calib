@@ -48,6 +48,10 @@ After stopping, check the run directory:
 ```text
 /home/zcy/calibrationdata/sensor_suite/fast_calib/<sensor>/runs/<run_id>/
   .current.env is stored at the sensor root and points to the latest scene
+  configs/
+    kalibr_current.env
+    <scene_id>__<sensor>__from_<kalibr_run_id>__<kalibr_calib_id>.yaml
+    <scene_id>__intrinsics_source.env
   scenes/<scene_id>/
     raw/input.bag
     image/image.png
@@ -89,6 +93,16 @@ the latest paths to:
 
 The FAST-Calib run scripts read `.current.env`, so the `Run FAST ...` buttons
 use the same bag/image paths that the record button produced.
+
+Each run also gets a config snapshot in `configs/`. The snapshot filename
+includes the selected Kalibr result, and the snapshot itself contains the exact
+bag, image, output path, and scene id. This keeps FAST-Calib results tied to the
+Kalibr intrinsics that produced them, even if you later re-run Kalibr and select
+a different camchain.
+
+Before launching FAST-Calib, the desktop script compares the snapshot's RGB
+intrinsics against selected Kalibr `cam0`. A mismatch stops the run instead of
+producing a hard-to-trace LiDAR -> thermal chain.
 
 ## Reference Material
 
